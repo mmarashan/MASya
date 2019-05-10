@@ -1,9 +1,6 @@
 package ru.volgadev.masya.model;
 
-/**
- * Created by rajeevkumarsingh on 24/07/17.
- */
-public class ChatMessage {
+public class Message {
     private MessageType type;
     private String content;
     private String sender;
