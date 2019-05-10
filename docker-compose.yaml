@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  nginx:
+   image: nginx
+   restart: always
+   ports:
+   - 8011:8011
+   volumes:
+   - ./nginx/conf.d:/etc/nginx/conf.d
+   depends_on:
+   - server
+
+  server:
+    restart: always
+    build: ./server
+    working_dir: /server
+    expose:
+      - "8011"
+    volumes:
+      - ./server:/server
+      - ~/.m2:/root/.m2
+    command: mvn clean spring-boot:run
+
