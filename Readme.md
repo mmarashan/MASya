@@ -13,6 +13,13 @@ Run using docker-compose:
 docker-compose up
 ```
 
+TODO:
+- Authorisation
+- Members management page
+- File transmition
+- Stream transmition
+- Any language clients (Java, Python, JS...)
+
 ## Learn More
 
 You can find the tutorial for sample application on this blog -

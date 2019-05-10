@@ -5,6 +5,7 @@ var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
 var messageForm = document.querySelector('#messageForm');
 var messageInput = document.querySelector('#message');
+var receiverInput = document.querySelector('#receiver');
 var messageArea = document.querySelector('#messageArea');
 var connectingElement = document.querySelector('.connecting');
 
@@ -33,14 +34,15 @@ function connect(event) {
 
 
 function onConnected() {
-    // Subscribe to the Public Topic
-    stompClient.subscribe('/topic/public', onMessageReceived);
 
     // Tell your username to the server
     stompClient.send("/app/chat.addUser",
         {},
         JSON.stringify({sender: username, type: 'JOIN'})
     )
+
+    // Subscribe to the Public Topic
+    stompClient.subscribe('/chat.room/'+username, onMessageReceived);
 
     connectingElement.classList.add('hidden');
 }
@@ -54,12 +56,16 @@ function onError(error) {
 
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
+    var receiverCode = receiverInput.value.trim();
 
-    if(messageContent && stompClient) {
+    if(receiverCode && messageContent && stompClient) {
         var chatMessage = {
             sender: username,
-            content: messageInput.value,
-            type: 'CHAT'
+            receiver: receiverCode,
+            content: messageContent,
+            contentType: 'TEXT',
+            type: 'MESSAGE',
+            tag: username
         };
 
         stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
