@@ -1,5 +1,7 @@
 ## Message Asynch Server (on Spring Boot WebSocket STOMP)
 
+![](masya_chat_demo.gif)
+
 Run server directly
 
 ```bash
