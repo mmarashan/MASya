@@ -26,7 +26,7 @@ public class WebSocketConfig extends WebSocketMessageBrokerConfigurationSupport 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/"); // was /app - check it
-        registry.enableSimpleBroker("/chat");   // in-memory broker
+        registry.enableSimpleBroker("/");   //  -was /chat - check it- in-memory broker
     }
 
     // registerSession Handler, that save sessions in holder

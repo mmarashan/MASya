@@ -19,10 +19,10 @@ public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandl
         super(clientInboundChannel, clientOutboundChannel);
     }
 
-
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         LOGGER.info("New websocket connection was established");
+        // register new session
         sessionHolder.registerSession(session);
         super.afterConnectionEstablished(session);
     }

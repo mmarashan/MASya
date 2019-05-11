@@ -10,7 +10,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.*;
 import ru.volgadev.masya.model.MemberRegistryManager;
-import ru.volgadev.masya.model.Message;
+import ru.volgadev.masya.model.MessageDTO;
 
 @Component
 public class WebSocketEventListener {
@@ -26,8 +26,13 @@ public class WebSocketEventListener {
     @Autowired
     private SessionHolder sessionHolder;
 
+    @Autowired
+    private MemberRegistryManager memberRegistryManager;
+
     /*
         handle connect - check credentials
+        if OK - register session
+        esle - close session
     */
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectEvent event) {
@@ -38,10 +43,11 @@ public class WebSocketEventListener {
         if (StompCommand.CONNECT.equals(headerAccessor.getCommand())) {
             String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
             String password = (String) headerAccessor.getFirstNativeHeader(PASSWORD_HEADER);
-            if (MemberRegistryManager.checkCredentials(username, password)){
+            if (memberRegistryManager.checkCredentials(username, password)){
                 logger.info("Success authorisation for "+username+"; sessionId = "+sessionId);
                 // create room, registerSession and subscribe
                 sessionHolder.registerUserSession(sessionId, username);
+
                 return;
             } else {
                 logger.info("Unsuccess authorisation for "+username+". Close session "+sessionId);
@@ -49,15 +55,34 @@ public class WebSocketEventListener {
                 return;
             }
         }
-        logger.info("Success authorisation. Close session "+sessionId);
+        logger.info("Unsuccess authorisation. Close session "+sessionId);
         sessionHolder.closeSessionById(sessionId);
 
     }
 
+    /*
+    * handle connected
+    * */
     @EventListener
     public void handleWebSocketConnectedListener(SessionConnectedEvent event) {
         String sessionId = StompHeaderAccessor.wrap(event.getMessage()).getSessionId();
-        logger.info("Success a new web socket connection: " + sessionId);
+        String username = sessionHolder.getUserBySession(sessionId);
+        logger.info("Success new web socket connection: " + sessionId + " " + username);
+    }
+
+    /*
+    * send sessionId in JOIN message
+    * */
+    private void sendJoinMessageToMember(String memberCode, String roomCode){
+        logger.info("Send JOIN to member "+ memberCode);
+        MessageDTO chatMessage = new MessageDTO();
+        chatMessage.setType(MessageDTO.MessageType.JOIN);
+        chatMessage.setReceiver(memberCode);
+        chatMessage.setContent(roomCode);
+        // TODO: temporally roomCode is sessionId. fix it
+        memberRegistryManager.addMemberRoom(memberCode, roomCode);
+        messagingTemplate.convertAndSend("/message.new/"+memberCode, chatMessage);
+        logger.info("Send JOIN to member "+ memberCode + " OK");
     }
 
 
@@ -66,7 +91,11 @@ public class WebSocketEventListener {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
         String sessionId = headerAccessor.getSessionId();
-        logger.info("User "+ username+" subscribe on ...");
+        // TODO: check permission for subscription
+        logger.info("User "+ username+" subscribe on "+event.getMessage().getHeaders().get("simpDestination"));
+
+        // for new member send JOIN message with roomCode
+        if (!memberRegistryManager.isMemberRegistred(username)) sendJoinMessageToMember(username, sessionId);
     }
 
     @EventListener
@@ -85,13 +114,6 @@ public class WebSocketEventListener {
         if(sessionId != null) {
             sessionHolder.closeSessionById(sessionId);
             logger.info("Session closed: " + sessionId);
-
-            // TODO: remove in only delete session
-            Message chatMessage = new Message();
-            chatMessage.setType(Message.MessageType.LEAVE);
-            chatMessage.setSender(username);
-
-            messagingTemplate.convertAndSend("/chat.room/"+username, chatMessage);
         }
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import ru.volgadev.masya.model.MemberRegistryManager;
-import ru.volgadev.masya.model.Message;
+import ru.volgadev.masya.model.MessageDTO;
 
 @org.springframework.stereotype.Controller
 public class MessageController {
@@ -18,32 +18,28 @@ public class MessageController {
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
 
+    @Autowired
+    private SessionHolder sessionHolder;
 
-    @MessageMapping("/member.join")
-    public void addUser(@Payload Message message,
-                        SimpMessageHeaderAccessor headerAccessor) {
-
-
-        logger.debug("Register user session: "+message.toString());
-        if (!message.getType().equals(Message.MessageType.JOIN))
-
-        // Add username in web socket session
-        headerAccessor.getSessionAttributes().put("username", message.getSender());
-        messagingTemplate.convertAndSend("/chat.room/"+message.getSender(), message);
-    }
-
-
+    @Autowired
+    private MemberRegistryManager memberRegistryManager;
+    
     // redirect message
-    @MessageMapping("/chat.sendMessage")
-    public void sendMessage(@Payload Message message) {
-        logger.debug("Redirect message: "+message.toString());
+    @MessageMapping("/message.send")
+    public void sendMessage(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+        logger.info("Handle message: "+message.toString());
+
+        String sessionId = headerAccessor.getSessionId();
 
         // TEMPORALLY instead submit: return message to sender
-        String senderRoomCode = MemberRegistryManager.getMemberRoom(message.getSender());
-        messagingTemplate.convertAndSend("/chat.room/"+senderRoomCode, message);
+        // TODO: add submit
+        String senderRoomCode = memberRegistryManager.getMemberRoom(message.getSender());
+        logger.info("Send message to : "+senderRoomCode);
+        messagingTemplate.convertAndSend("/message.new/"+senderRoomCode, message);
 
-        String roomCode = MemberRegistryManager.getMemberRoom(message.getReceiver());
-        messagingTemplate.convertAndSend("/chat.room/"+roomCode, message);
+        String roomCode = memberRegistryManager.getMemberRoom(message.getReceiver());
+        // String roomCode = message.getReceiver();
+        messagingTemplate.convertAndSend("/message.new/"+roomCode, message);
     }
 
 

@@ -1,6 +1,6 @@
 package ru.volgadev.masya.model;
 
-public class Message {
+public class MessageDTO {
     private MessageType type;
     private String content;
     private ContentType contentType;
@@ -69,13 +69,13 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message{" +
-                "type=" + type +
-                ", content='" + content + '\'' +
-                ", contentType=" + contentType +
-                ", sender='" + sender + '\'' +
-                ", receiver='" + receiver + '\'' +
-                ", tag='" + tag + '\'' +
+        return "{" +
+                "\"type=\"" + type +
+                ", \"content\"='" + content + '\'' +
+                ", \"contentType\"=" + contentType.name() +
+                ", \"sender\"='" + sender + '\'' +
+                ", \"receiver\"='" + receiver + '\'' +
+                ", \"tag\"='" + tag + '\'' +
                 '}';
     }
 }

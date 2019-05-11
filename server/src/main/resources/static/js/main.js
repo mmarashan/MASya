@@ -11,6 +11,9 @@ var connectingElement = document.querySelector('.connecting');
 
 var stompClient = null;
 var username = null;
+var sessionId = null;
+
+var initSubscribeObj = null;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
@@ -36,14 +39,8 @@ function connect(event) {
 
 function onConnected() {
 
-    // Tell your username to the server
-    stompClient.send("/member.join",
-        {username: username},
-        JSON.stringify({sender: username, type: 'JOIN'})
-    )
-
     // Subscribe to the Public Topic
-    stompClient.subscribe('/chat.room/'+username, onMessageReceived, {username: username});
+    initSubscribeObj = stompClient.subscribe('/message.new/'+username, onMessageReceived, {username: username});
 
     connectingElement.classList.add('hidden');
 }
@@ -69,7 +66,7 @@ function sendMessage(event) {
             tag: username
         };
 
-        stompClient.send("/chat.sendMessage", {}, JSON.stringify(chatMessage));
+        stompClient.send("/message.send", {username: username}, JSON.stringify(chatMessage));
         messageInput.value = '';
     }
     event.preventDefault();
@@ -83,7 +80,10 @@ function onMessageReceived(payload) {
 
     if(message.type === 'JOIN') {
         messageElement.classList.add('event-message');
-        message.content = message.sender + ' joined!';
+        sessionId = message.content;
+        stompClient.unsubscribe(initSubscribeObj);
+        stompClient.subscribe('/message.new/'+sessionId, onMessageReceived, {username: username});
+
     } else if (message.type === 'LEAVE') {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' left!';
