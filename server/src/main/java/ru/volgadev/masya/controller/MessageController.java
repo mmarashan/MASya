@@ -33,6 +33,7 @@ public class MessageController {
 
         // TEMPORALLY instead submit: return message to sender
         // TODO: add submit
+        // TODO: check receiver online
         String senderRoomCode = memberRegistryManager.getMemberRoom(message.getSender());
         logger.info("Send message to : "+senderRoomCode);
         messagingTemplate.convertAndSend("/message.new/"+senderRoomCode, message);
