@@ -18,6 +18,21 @@ public class MessageController {
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
 
+
+    @MessageMapping("/member.join")
+    public void addUser(@Payload Message message,
+                        SimpMessageHeaderAccessor headerAccessor) {
+
+
+        logger.debug("Register user session: "+message.toString());
+        if (!message.getType().equals(Message.MessageType.JOIN))
+
+        // Add username in web socket session
+        headerAccessor.getSessionAttributes().put("username", message.getSender());
+        messagingTemplate.convertAndSend("/chat.room/"+message.getSender(), message);
+    }
+
+
     // redirect message
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload Message message) {
@@ -33,14 +48,5 @@ public class MessageController {
 
 
 
-    @MessageMapping("/chat.addUser")
-    public void addUser(@Payload Message message,
-                               SimpMessageHeaderAccessor headerAccessor) {
-        logger.debug("Register user session: "+message.toString());
-        
-        // Add username in web socket session
-        headerAccessor.getSessionAttributes().put("username", message.getSender());
-        messagingTemplate.convertAndSend("/chat.room/"+message.getSender(), message);
-    }
 
 }

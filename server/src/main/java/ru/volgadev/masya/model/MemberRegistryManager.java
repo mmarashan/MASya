@@ -6,7 +6,13 @@ public class MemberRegistryManager {
         return "";
     }
 
-    // TODO: database register with user credentials, generate session roomCode
+    public static boolean checkCredentials(String username, String password){
+        // TODO: add check credentials
+        if (username.equals(password)) return true;
+        return false;
+    }
+
+    // TODO: database registerSession with user credentials, generate session roomCode
     /*
     * return roomCode
     * */
