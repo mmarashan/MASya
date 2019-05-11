@@ -16,8 +16,9 @@ docker-compose up
 ```
 
 TODO:
-- Authorisation
+- Hold message for offline members
 - Members management page
 - File transmition
 - Stream transmition
 - Any language clients (Java, Python, JS...)
+- Channels an subscriptions
