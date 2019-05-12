@@ -1,4 +1,11 @@
-## Message Asynch Server (on Spring Boot WebSocket STOMP)
+## Message Asynch Server on Java
+
+Lightweight Message Asynch Server written on Java (using Spring-Boot Websocket) for creating real-time data transmittion projects: chats, web-apps, IoT.
+
+Opportunities:
+- Auth by username/password
+- Hold message for offline members
+- Protocol using submiting input messages for sender
 
 ![](masya_chat_demo.gif)
 
@@ -16,9 +23,13 @@ docker-compose up
 ```
 
 TODO:
-- Hold message for offline members
+- Api for check is online member
 - Members management page
-- File transmition
-- Stream transmition
+- Bynary data transmition
 - Any language clients (Java, Python, JS...)
-- Channels an subscriptions
+- Channels and subscriptions
+
+Issues:
+- non send message when start via compose with nginx
+- bad markup for Disconnect button
+- too short roomCode based on sessionId
