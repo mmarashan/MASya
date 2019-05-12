@@ -1,22 +1,23 @@
 package ru.volgadev.masya.model;
 
+import java.time.Instant;
+
 public class MessageDTO {
     private MessageType type;
-    private String content;
-    private ContentType contentType;
+    private String textContent;
     private String sender;
     private String receiver;
     private String tag;
 
-    public enum ContentType {
-        TEXT
-    }
+    private long timestampUTC = Instant.now().getEpochSecond();
+
 
     public enum MessageType {
         MESSAGE,
         SUBMIT,
-        JOIN,
-        LEAVE
+        JOIN, // server output message to member with roomCode
+        LEAVE,
+        ERROR // server output message to member with error
     }
 
     public MessageType getType() {
@@ -27,12 +28,12 @@ public class MessageDTO {
         this.type = type;
     }
 
-    public String getContent() {
-        return content;
+    public String getTextContent() {
+        return textContent;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setTextContent(String textContent) {
+        this.textContent = textContent;
     }
 
     public String getSender() {
@@ -51,14 +52,6 @@ public class MessageDTO {
         this.receiver = receiver;
     }
 
-    public ContentType getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(ContentType contentType) {
-        this.contentType = contentType;
-    }
-
     public String getTag() {
         return tag;
     }
@@ -67,15 +60,20 @@ public class MessageDTO {
         this.tag = tag;
     }
 
+    // only getter - sender can't set timestamp
+    public long getTimestampUTC() {
+        return timestampUTC;
+    }
+
     @Override
     public String toString() {
         return "{" +
                 "\"type=\"" + type +
-                ", \"content\"='" + content + '\'' +
-                ", \"contentType\"=" + contentType.name() +
+                ", \"textContent\"='" + textContent + '\'' +
                 ", \"sender\"='" + sender + '\'' +
                 ", \"receiver\"='" + receiver + '\'' +
                 ", \"tag\"='" + tag + '\'' +
+                ", \"timestampUTC\"='" + timestampUTC + '\'' +
                 '}';
     }
 }

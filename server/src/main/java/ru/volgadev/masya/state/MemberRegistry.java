@@ -1,8 +1,10 @@
-package ru.volgadev.masya.model;
+package ru.volgadev.masya.state;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import ru.volgadev.masya.model.Member;
+import ru.volgadev.masya.model.MessageDTO;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -10,9 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 // TODO: database member register (or serialisation)
-public class MemberRegistryManager {
+public class MemberRegistry {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MemberRegistryManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MemberRegistry.class);
 
     // key - username, value - roomCode
     private final Map<String, Member> memberMap = new ConcurrentHashMap<>();

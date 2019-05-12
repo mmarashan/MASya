@@ -9,8 +9,9 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.*;
-import ru.volgadev.masya.model.MemberRegistryManager;
+import ru.volgadev.masya.state.MemberRegistry;
 import ru.volgadev.masya.model.MessageDTO;
+import ru.volgadev.masya.state.SessionHolder;
 
 import java.util.ArrayList;
 
@@ -29,7 +30,7 @@ public class WebSocketEventController {
     private SessionHolder sessionHolder;
 
     @Autowired
-    private MemberRegistryManager memberRegistryManager;
+    private MemberRegistry memberRegistry;
 
     /*
         handle connect - check credentials
@@ -45,7 +46,7 @@ public class WebSocketEventController {
         if (StompCommand.CONNECT.equals(headerAccessor.getCommand())) {
             String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
             String password = (String) headerAccessor.getFirstNativeHeader(PASSWORD_HEADER);
-            if (memberRegistryManager.checkCredentials(username, password)){
+            if (memberRegistry.checkCredentials(username, password)){
                 logger.info("Success authorisation for "+username+"; sessionId = "+sessionId);
                 // create room, registerSession and subscribe
                 sessionHolder.registerMemberSession(sessionId, username);
@@ -80,9 +81,9 @@ public class WebSocketEventController {
         MessageDTO chatMessage = new MessageDTO();
         chatMessage.setType(MessageDTO.MessageType.JOIN);
         chatMessage.setReceiver(username);
-        chatMessage.setContent(roomCode);
+        chatMessage.setTextContent(roomCode);
         // TODO: temporally roomCode is sessionId. fix it
-        memberRegistryManager.addMemberRoom(username, roomCode);
+        memberRegistry.addMemberRoom(username, roomCode);
         messagingTemplate.convertAndSend("/message.new/"+username, chatMessage);
         logger.info("Send JOIN to member "+ username + " OK");
     }
@@ -91,7 +92,7 @@ public class WebSocketEventController {
      * send old messages from buffer
      * */
     private void sendBufferMemberMessages(String username){
-        ArrayList<MessageDTO> bufferMessages = memberRegistryManager.getNewMessages(username);
+        ArrayList<MessageDTO> bufferMessages = memberRegistry.getNewMessages(username);
         if (bufferMessages!=null){
             logger.info("Send buffer messages for "+ username + "; count="+bufferMessages.size());
             for (MessageDTO m: bufferMessages){
@@ -113,10 +114,10 @@ public class WebSocketEventController {
         logger.info("Member "+ username+" subscribe on "+event.getMessage().getHeaders().get("simpDestination"));
 
         // for new member send JOIN message with roomCode and old messages from buffer
-        if (!memberRegistryManager.isMemberOnline(username)) {
+        if (!memberRegistry.isMemberOnline(username)) {
             sendBufferMemberMessages(username);
             sendJoinMessageToMember(username, sessionId);
-            memberRegistryManager.setMemberOnline(username, true);
+            memberRegistry.setMemberOnline(username, true);
         };
     }
 
@@ -137,7 +138,7 @@ public class WebSocketEventController {
 
         if(sessionId != null) {
             sessionHolder.closeSessionById(sessionId);
-            memberRegistryManager.setMemberOnline(username, false);
+            memberRegistry.setMemberOnline(username, false);
             logger.info("Session closed: " + sessionId);
         }
     }

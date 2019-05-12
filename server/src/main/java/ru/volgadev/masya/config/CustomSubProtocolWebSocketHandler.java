@@ -7,7 +7,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.SubscribableChannel;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
-import ru.volgadev.masya.controller.SessionHolder;
+import ru.volgadev.masya.state.SessionHolder;
 
 public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomSubProtocolWebSocketHandler.class);

@@ -7,8 +7,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import ru.volgadev.masya.model.MemberRegistryManager;
+import ru.volgadev.masya.state.MemberRegistry;
 import ru.volgadev.masya.model.MessageDTO;
+import ru.volgadev.masya.state.SessionHolder;
 
 @org.springframework.stereotype.Controller
 public class MessageController {
@@ -22,34 +23,81 @@ public class MessageController {
     private SessionHolder sessionHolder;
 
     @Autowired
-    private MemberRegistryManager memberRegistryManager;
+    private MemberRegistry memberRegistry;
     
-    // redirect message
+    // handle input message
     @MessageMapping("/message.send")
-    public void sendMessage(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+    public void handle(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
         LOGGER.info("Handle message: "+message.toString());
+
+        if (MessageDTO.MessageType.MESSAGE.equals(message.getType())) handeSend(message, headerAccessor);
+        if (MessageDTO.MessageType.SUBMIT.equals(message.getType())) handleSubmit(message, headerAccessor);
+        if (MessageDTO.MessageType.LEAVE.equals(message.getType())) handleLeave(message, headerAccessor);
+
+    }
+
+    void handeSend(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor){
 
         String sessionId = headerAccessor.getSessionId();
 
-        // TEMPORALLY instead submit: return message to sender
-        // TODO: return submit 3
-        // TODO: set timestamp 2
-        String senderRoomCode = memberRegistryManager.getMemberRoom(message.getSender());
-        LOGGER.info("Send message to : "+senderRoomCode);
-        messagingTemplate.convertAndSend("/message.new/"+senderRoomCode, message);
+        // validate field
+        if (message.getSender()==null) {
+            LOGGER.info("Bad message. Sender is empty: "+message.toString());
+            return;
+        }
+        if (message.getReceiver()==null) {
+            sendError(message.getSender(), "Receiver is empty!");
+            return;
+        }
 
+        // TODO: save message to db as cost option :)
+        sendMessage(message);
+    }
+
+    // receiver send submit message to sender
+    // TODO: save unsubmited messages and repeat after
+    // NOW: redirect it
+    void handleSubmit(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+        LOGGER.info("Handle submit message: " + message.toString());
+        if (message.getTag()==null){
+            sendError(message.getSender(), "Message TAG is empty!");
+            return;
+        }
+        sendMessage(message);
+    }
+
+    // close session and set offline
+    void handleLeave(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+        LOGGER.info("Handle message: " + message.toString());
+
+        String sessionId = headerAccessor.getSessionId();
+        sessionHolder.closeSessionById(sessionId);
+        memberRegistry.setMemberOnline(message.getSender(), false);
+        LOGGER.info("Session closed: " + sessionId);
+
+    }
+
+
+    void sendMessage(MessageDTO message){
         String receiverUserame = message.getReceiver();
         // if receiver online - send message
         // else save message for next session
-        if (memberRegistryManager.isMemberOnline(receiverUserame)){
-            String roomCode = memberRegistryManager.getMemberRoom(receiverUserame);
+        if (memberRegistry.isMemberOnline(receiverUserame)){
+            String roomCode = memberRegistry.getMemberRoom(receiverUserame);
             messagingTemplate.convertAndSend("/message.new/" + roomCode, message);
         } else {
-            memberRegistryManager.addNewMessageToMemberBuffer(receiverUserame, message);
+            memberRegistry.addNewMessageToMemberBuffer(receiverUserame, message);
         }
     }
 
 
+    void sendError(String receiverCode, String errorText){
+        MessageDTO message = new MessageDTO();
+        message.setReceiver(receiverCode);
+        message.setTextContent(errorText);
+        message.setType(MessageDTO.MessageType.ERROR);
+        sendMessage(message);
+    }
 
 
 }
