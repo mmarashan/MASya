@@ -13,7 +13,7 @@ import ru.volgadev.masya.model.MessageDTO;
 @org.springframework.stereotype.Controller
 public class MessageController {
 
-    private static final Logger logger = LoggerFactory.getLogger(MessageController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
@@ -27,20 +27,26 @@ public class MessageController {
     // redirect message
     @MessageMapping("/message.send")
     public void sendMessage(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
-        logger.info("Handle message: "+message.toString());
+        LOGGER.info("Handle message: "+message.toString());
 
         String sessionId = headerAccessor.getSessionId();
 
         // TEMPORALLY instead submit: return message to sender
-        // TODO: add submit
-        // TODO: check receiver online
+        // TODO: return submit 3
+        // TODO: set timestamp 2
         String senderRoomCode = memberRegistryManager.getMemberRoom(message.getSender());
-        logger.info("Send message to : "+senderRoomCode);
+        LOGGER.info("Send message to : "+senderRoomCode);
         messagingTemplate.convertAndSend("/message.new/"+senderRoomCode, message);
 
-        String roomCode = memberRegistryManager.getMemberRoom(message.getReceiver());
-        // String roomCode = message.getReceiver();
-        messagingTemplate.convertAndSend("/message.new/"+roomCode, message);
+        String receiverUserame = message.getReceiver();
+        // if receiver online - send message
+        // else save message for next session
+        if (memberRegistryManager.isMemberOnline(receiverUserame)){
+            String roomCode = memberRegistryManager.getMemberRoom(receiverUserame);
+            messagingTemplate.convertAndSend("/message.new/" + roomCode, message);
+        } else {
+            memberRegistryManager.addNewMessageToMemberBuffer(receiverUserame, message);
+        }
     }
 
 

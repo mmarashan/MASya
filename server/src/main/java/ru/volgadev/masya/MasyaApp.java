@@ -4,9 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class WebsocketDemoApplication {
+public class MasyaApp {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WebsocketDemoApplication.class, args);
+		SpringApplication.run(MasyaApp.class, args);
 	}
 }

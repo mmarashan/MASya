@@ -62,13 +62,13 @@ public class SessionHolder {
         }
     }
 
-    public String getUserBySession(String sessionId){
+    public String getMemberBySession(String sessionId){
         if (sessionUserMap.containsKey(sessionId)) return sessionUserMap.get(sessionId);
         return null;
     }
 
 
-    public void registerUserSession(String sessionId, String usercode){
+    public void registerMemberSession(String sessionId, String usercode){
         if (sessionMap.containsKey(sessionId)) sessionUserMap.put(sessionId, usercode);
     }
 
