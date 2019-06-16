@@ -80,12 +80,17 @@ public class MessageController {
 
     void sendMessage(MessageDTO message){
         String receiverUserame = message.getReceiver();
+        if (receiverUserame == null){
+            return;
+        }
         // if receiver online - send message
         // else save message for next session
         if (memberRegistry.isMemberOnline(receiverUserame)){
             String roomCode = memberRegistry.getMemberRoom(receiverUserame);
+            LOGGER.info("Send: " + message.toString());
             messagingTemplate.convertAndSend("/message.new/" + roomCode, message);
         } else {
+            LOGGER.info("Add to buffer: " + message.toString());
             memberRegistry.addNewMessageToMemberBuffer(receiverUserame, message);
         }
     }

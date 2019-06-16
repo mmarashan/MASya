@@ -43,10 +43,11 @@ public class WebSocketEventController {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = headerAccessor.getSessionId();
         logger.info("sessionId = "+sessionId);
+        logger.info("headers: "+ headerAccessor.getMessageHeaders().toString());
         if (StompCommand.CONNECT.equals(headerAccessor.getCommand())) {
             String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
             String password = (String) headerAccessor.getFirstNativeHeader(PASSWORD_HEADER);
-            if (memberRegistry.checkCredentials(username, password)){
+            if ((username!=null)&&(password!=null)&&(memberRegistry.checkCredentials(username, password))){
                 logger.info("Success authorisation for "+username+"; sessionId = "+sessionId);
                 // create room, registerSession and subscribe
                 sessionHolder.registerMemberSession(sessionId, username);
@@ -110,6 +111,11 @@ public class WebSocketEventController {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
         String sessionId = headerAccessor.getSessionId();
+
+        if (username==null){
+            return;
+        }
+
         // TODO: check permission for subscription
         logger.info("Member "+ username+" subscribe on "+event.getMessage().getHeaders().get("simpDestination"));
 
@@ -138,7 +144,7 @@ public class WebSocketEventController {
 
         if(sessionId != null) {
             sessionHolder.closeSessionById(sessionId);
-            memberRegistry.setMemberOnline(username, false);
+            if (username!=null) memberRegistry.setMemberOnline(username, false);
             logger.info("Session closed: " + sessionId);
         }
     }

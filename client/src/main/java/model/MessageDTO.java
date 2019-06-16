@@ -68,12 +68,12 @@ public class MessageDTO {
     @Override
     public String toString() {
         return "{" +
-                "\"type\":\"" + type + '\"' +
-                ", \"textContent\":\"" + textContent + '\"' +
-                ", \"sender\":\"" + sender + '\"' +
-                ", \"receiver\":\"" + receiver + '\"' +
-                ", \"tag\":\"" + tag + '\"' +
-                ", \"timestampUTC\":\"" + timestampUTC + '\"' +
+                "\"type=\"" + type +
+                ", \"textContent\"='" + textContent + '\'' +
+                ", \"sender\"='" + sender + '\'' +
+                ", \"receiver\"='" + receiver + '\'' +
+                ", \"tag\"='" + tag + '\'' +
+                ", \"timestampUTC\"='" + timestampUTC + '\'' +
                 '}';
     }
 }
