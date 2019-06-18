@@ -1,4 +1,4 @@
-package ru.volgadev.masya.model;
+package model;
 
 import java.time.Instant;
 
@@ -68,12 +68,12 @@ public class MessageDTO {
     @Override
     public String toString() {
         return "{" +
-                "\"type=\"" + type +
-                ", \"textContent\"='" + textContent + '\'' +
-                ", \"sender\"='" + sender + '\'' +
-                ", \"receiver\"='" + receiver + '\'' +
-                ", \"tag\"='" + tag + '\'' +
-                ", \"timestampUTC\"='" + timestampUTC + '\'' +
+                "\"type\":\"" + type + '\"' +
+                ", \"textContent\":\"" + textContent + '\"' +
+                ", \"sender\":\"" + sender + '\"' +
+                ", \"receiver\":\"" + receiver + '\"' +
+                ", \"tag\":\"" + tag + '\"' +
+                ", \"timestampUTC\":\"" + timestampUTC + '\"' +
                 '}';
     }
 }
