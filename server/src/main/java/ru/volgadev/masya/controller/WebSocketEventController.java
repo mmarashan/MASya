@@ -102,14 +102,13 @@ public class WebSocketEventController {
         }
     }
 
-
     /*
     * check if online user and know his room
     * */
     @EventListener
     public void handleWebSocketSubscribeListener(SessionSubscribeEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
+        String username = sessionHolder.getMemberBySession(sessionId);
         String sessionId = headerAccessor.getSessionId();
 
         if (username==null){
@@ -125,6 +124,7 @@ public class WebSocketEventController {
             sendJoinMessageToMember(username, sessionId);
             memberRegistry.setMemberOnline(username, true);
         };
+        memberRegistry.setMemberOnline(username, true);
     }
 
     @EventListener
