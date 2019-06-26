@@ -24,9 +24,12 @@ public class MasyaClient {
     private String username;
     private String password;
 
+    private String roomCode;
+    private StompSession session;
+
     private static Logger logger = Logger.getLogger(MasyaClient.class);
 
-    StompSession connect(String username, String password) {
+    boolean connect(String username, String password) {
 
         this.username = username;
         this.password = password;
@@ -35,7 +38,6 @@ public class MasyaClient {
         List<Transport> transports = Collections.singletonList(webSocketTransport);
 
         SockJsClient sockJsClient = new SockJsClient(transports);
-        //sockJsClient.setMessageCodec(new Jackson2SockJsMessageCodec());
 
         WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
 
@@ -46,49 +48,68 @@ public class MasyaClient {
         stompHeaders.set("username" ,username);
         stompHeaders.set("password" ,password);
 
-
         String url = "ws://{host}:{port}/ws";
         ListenableFuture<StompSession> f = stompClient.connect(url, headers, stompHeaders, new MyHandler(), "0.0.0.0", 8010);
         try {
-            return f.get();
+            session =  f.get();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            return null;
+            return false;
         } catch (ExecutionException e) {
             logger.error("Bad connection. Check you credentials in headers!");
-            return null;
+            return false;
         }
-    }
 
-    public void subscribeOnMessage(StompSession stompSession) throws ExecutionException, InterruptedException {
-        stompSession.subscribe("/message.new/"+this.username, new StompFrameHandler() {
+        // subscribe on JOIN message and JOIN after
+        session.subscribe("/message.new/"+this.username, new StompFrameHandler() {
 
             public Type getPayloadType(StompHeaders stompHeaders) {
-                logger.info("Received: " + new String(stompHeaders.toString()));
                 return byte[].class;
             }
 
             public void handleFrame(StompHeaders stompHeaders, Object o) {
-                logger.info("Received: " + new String((byte[]) o));
+                MessageDTO m = MessageDTO.fromJson(new String((byte[]) o));
+                logger.info("Received and serialized: " + m.toJson()+"; "+stompHeaders.toString());
+                if ("JOIN".equals(m.getType().name())){
+                    roomCode = m.getTextContent();
+                    subscribeOnMessage(session, roomCode);
+                }
+            }
+        });
+
+        return true;
+    }
+
+
+    private void subscribeOnMessage(StompSession stompSession, String roomCode) {
+        stompSession.subscribe("/message.new/"+roomCode, new StompFrameHandler() {
+
+            public Type getPayloadType(StompHeaders stompHeaders) {
+                return byte[].class;
+            }
+
+            public void handleFrame(StompHeaders stompHeaders, Object o) {
+                MessageDTO m = MessageDTO.fromJson(new String((byte[]) o));
+                logger.info("Received and serialized: " + m.toJson()+"; "+stompHeaders.toString());
             }
         });
     }
 
-    public void send(StompSession stompSession, String payload) {
+    void send(String receiverCode, String payload) {
         MessageDTO dto = new MessageDTO();
-        dto.setReceiver("t1");
-        dto.setSender("t1");
+        dto.setReceiver(receiverCode);
+        dto.setSender(this.username);
         dto.setType(MessageDTO.MessageType.MESSAGE);
         dto.setTag("t1t1t1");
         dto.setTextContent(payload);
         StompHeaders stompHeaders = new StompHeaders();
 
-        stompHeaders.set("username" ,"t1");
-        stompHeaders.set("password" ,"t1");
+        stompHeaders.set("username" ,username);
+        stompHeaders.set("password" ,password);
         stompHeaders.setDestination("/message.send");
-        // stompHeaders.setContentType(new MimeType("BYTES", "", Charset.forName("UTF-8")));
 
-        stompSession.send(stompHeaders, dto.toString().getBytes(Charset.forName("UTF-8")));
+
+        session.send(stompHeaders, dto.toString().getBytes(Charset.forName("UTF-8")));
     }
 
     private class MyHandler extends StompSessionHandlerAdapter {
@@ -100,16 +121,17 @@ public class MasyaClient {
     public static void main(String[] args) throws Exception {
         MasyaClient helloClient = new MasyaClient();
 
-        StompSession stompSession = helloClient.connect("t1","t1");
-        if (stompSession==null){
+        boolean connected = helloClient.connect("t1","t1");
+        if (!connected){
             return;
+        } else {
+            // TODO: убрать необходимость этого засыпания. сервер не синхронизирован
+            Thread.sleep(1000);
         }
 
-        logger.info("Subscribing to greeting topic using session " + stompSession);
-        helloClient.subscribeOnMessage(stompSession);
 
-        logger.info("Sending hello message" + stompSession);
-        helloClient.send(stompSession, "Hello me!");
+        logger.info("Sending hello message");
+        helloClient.send("t1", "Hello me!");
         Thread.sleep(5000);
     }
 

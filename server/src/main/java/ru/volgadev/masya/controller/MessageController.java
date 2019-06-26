@@ -87,7 +87,7 @@ public class MessageController {
         // else save message for next session
         if (memberRegistry.isMemberOnline(receiverUserame)){
             String roomCode = memberRegistry.getMemberRoom(receiverUserame);
-            LOGGER.info("Send: " + message.toString());
+            LOGGER.info("Send: " + message.toString()+" to "+roomCode);
             messagingTemplate.convertAndSend("/message.new/" + roomCode, message);
         } else {
             LOGGER.info("Add to buffer: " + message.toString());

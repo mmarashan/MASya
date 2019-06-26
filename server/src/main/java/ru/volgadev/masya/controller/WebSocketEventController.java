@@ -92,12 +92,13 @@ public class WebSocketEventController {
     /*
      * send old messages from buffer
      * */
-    private void sendBufferMemberMessages(String username){
+    private void sendBufferMemberMessages(String sessionId){
+        String username = sessionHolder.getMemberBySession(sessionId);
         ArrayList<MessageDTO> bufferMessages = memberRegistry.getNewMessages(username);
         if (bufferMessages!=null){
             logger.info("Send buffer messages for "+ username + "; count="+bufferMessages.size());
             for (MessageDTO m: bufferMessages){
-                messagingTemplate.convertAndSend("/message.new/"+username, m);
+                messagingTemplate.convertAndSend("/message.new/"+sessionId, m);
             }
         }
     }
@@ -108,22 +109,29 @@ public class WebSocketEventController {
     @EventListener
     public void handleWebSocketSubscribeListener(SessionSubscribeEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String username = sessionHolder.getMemberBySession(sessionId);
         String sessionId = headerAccessor.getSessionId();
+        String username = sessionHolder.getMemberBySession(sessionId);
 
         if (username==null){
             return;
         }
+
+        if (!event.getMessage().getHeaders().containsKey("simpDestination")){
+            logger.debug("Error message for subscribing! Empty simpDestination");
+        }
+
+        boolean joinToPrivateRoom = event.getMessage().getHeaders().get("simpDestination").toString().endsWith(sessionId);
 
         // TODO: check permission for subscription
         logger.info("Member "+ username+" subscribe on "+event.getMessage().getHeaders().get("simpDestination"));
 
         // for new member send JOIN message with roomCode and old messages from buffer
         if (!memberRegistry.isMemberOnline(username)) {
-            sendBufferMemberMessages(username);
             sendJoinMessageToMember(username, sessionId);
-            memberRegistry.setMemberOnline(username, true);
-        };
+        }
+        if (joinToPrivateRoom){
+            sendBufferMemberMessages(sessionId);
+        }
         memberRegistry.setMemberOnline(username, true);
     }
 
@@ -142,10 +150,8 @@ public class WebSocketEventController {
         String username = sessionHolder.getMemberBySession(sessionId);
         logger.info("Member Disconnected : " + username);
 
-        if(sessionId != null) {
-            sessionHolder.closeSessionById(sessionId);
-            if (username!=null) memberRegistry.setMemberOnline(username, false);
-            logger.info("Session closed: " + sessionId);
-        }
+        if(sessionId != null) sessionHolder.closeSessionById(sessionId);
+        if(username != null) memberRegistry.setMemberOnline(username, false);
+        logger.info("Session closed: " +username + " " + sessionId);
     }
 }

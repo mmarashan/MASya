@@ -1,21 +1,21 @@
 version: '3.7'
 services:
-  nginx:
-   image: nginx
-   restart: always
-   ports:
-   - 8011:8011
-   volumes:
-   - ./nginx/conf.d:/etc/nginx/conf.d
-   depends_on:
-   - server
+#  nginx:
+#   image: nginx
+#   restart: always
+#   ports:
+#   - 8011:8011
+#   volumes:
+#   - ./nginx/conf.d:/etc/nginx/conf.d
+#   depends_on:
+#   - server
 
   server:
     restart: always
     build: ./server
     working_dir: /server
-    expose:
-      - "8011"
+    ports:
+       - 8010:8010
     volumes:
       - ./server:/server
       - ~/.m2:/root/.m2

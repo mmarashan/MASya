@@ -1,5 +1,7 @@
 package model;
 
+import com.google.gson.Gson;
+
 import java.time.Instant;
 
 public class MessageDTO {
@@ -63,6 +65,17 @@ public class MessageDTO {
     // only getter - sender can't set timestamp
     public long getTimestampUTC() {
         return timestampUTC;
+    }
+
+    public String toJson(){
+        Gson gson = new Gson();
+        return gson.toJson(this);
+    }
+
+    public static MessageDTO fromJson(String jsonStr){
+        Gson gson = new Gson();
+        MessageDTO m = gson.fromJson(jsonStr, MessageDTO.class);
+        return m;
     }
 
     @Override
