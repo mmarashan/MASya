@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.volgadev.masya.model.Member;
-import ru.volgadev.masya.model.MessageDTO;
+import ru.volgadev.masya.model.Message;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -58,12 +58,12 @@ public class MemberRegistry {
     }
 
 
-    public void addNewMessageToMemberBuffer(String username, MessageDTO m){
+    public void addNewMessageToMemberBuffer(String username, Message m){
         if (!memberMap.containsKey(username)) addMember(username);
         memberMap.get(username).addNewMessageToBuffer(m);
     }
 
-    public ArrayList<MessageDTO> getNewMessages(String username){
+    public ArrayList<Message> getNewMessages(String username){
         if (memberMap.containsKey(username)) return memberMap.get(username).getNewMessages();
         return null;
     }

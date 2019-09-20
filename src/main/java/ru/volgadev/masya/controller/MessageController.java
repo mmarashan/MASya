@@ -8,7 +8,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import ru.volgadev.masya.state.MemberRegistry;
-import ru.volgadev.masya.model.MessageDTO;
+import ru.volgadev.masya.model.Message;
 import ru.volgadev.masya.state.SessionHolder;
 
 @org.springframework.stereotype.Controller
@@ -27,16 +27,16 @@ public class MessageController {
     
     // handle input message
     @MessageMapping("/message.send")
-    public void handle(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+    public void handle(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
         LOGGER.info("Handle message: "+message.toString());
 
-        if (MessageDTO.MessageType.MESSAGE.equals(message.getType())) handeSend(message, headerAccessor);
-        if (MessageDTO.MessageType.SUBMIT.equals(message.getType())) handleSubmit(message, headerAccessor);
-        if (MessageDTO.MessageType.LEAVE.equals(message.getType())) handleLeave(message, headerAccessor);
+        if (Message.MessageType.MESSAGE.equals(message.getType())) handeSend(message, headerAccessor);
+        if (Message.MessageType.SUBMIT.equals(message.getType())) handleSubmit(message, headerAccessor);
+        if (Message.MessageType.LEAVE.equals(message.getType())) handleLeave(message, headerAccessor);
 
     }
 
-    void handeSend(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor){
+    void handeSend(@Payload Message message, SimpMessageHeaderAccessor headerAccessor){
 
         String sessionId = headerAccessor.getSessionId();
 
@@ -57,7 +57,7 @@ public class MessageController {
     // receiver send submit message to sender
     // TODO: save unsubmited messages and repeat after
     // NOW: redirect it
-    void handleSubmit(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+    void handleSubmit(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
         LOGGER.info("Handle submit message: " + message.toString());
         if (message.getTag()==null){
             sendError(message.getSender(), "Message TAG is empty!");
@@ -67,7 +67,7 @@ public class MessageController {
     }
 
     // close session and set offline
-    void handleLeave(@Payload MessageDTO message, SimpMessageHeaderAccessor headerAccessor) {
+    void handleLeave(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
         LOGGER.info("Handle message: " + message.toString());
 
         String sessionId = headerAccessor.getSessionId();
@@ -78,7 +78,7 @@ public class MessageController {
     }
 
 
-    void sendMessage(MessageDTO message){
+    void sendMessage(Message message){
         String receiverUserame = message.getReceiver();
         if (receiverUserame == null){
             return;
@@ -97,10 +97,10 @@ public class MessageController {
 
 
     void sendError(String receiverCode, String errorText){
-        MessageDTO message = new MessageDTO();
+        Message message = new Message();
         message.setReceiver(receiverCode);
         message.setTextContent(errorText);
-        message.setType(MessageDTO.MessageType.ERROR);
+        message.setType(Message.MessageType.ERROR);
         sendMessage(message);
     }
 

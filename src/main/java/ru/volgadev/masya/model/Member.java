@@ -1,7 +1,6 @@
 package ru.volgadev.masya.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Member {
@@ -13,7 +12,7 @@ public class Member {
     // nobody can't send message to user directly
     private String roomCode;
 
-    private ArrayList<MessageDTO> messageBuffer;
+    private ArrayList<Message> messageBuffer;
 
     // channels created by member, where only he can write
     private List<String> publishChannels;
@@ -52,13 +51,13 @@ public class Member {
         isOnline = online;
     }
 
-    public void addNewMessageToBuffer(MessageDTO m){
+    public void addNewMessageToBuffer(Message m){
         messageBuffer.add(m);
     }
 
-    public ArrayList<MessageDTO> getNewMessages(){
+    public ArrayList<Message> getNewMessages(){
         if (messageBuffer.size() == 0) return null;
-        ArrayList<MessageDTO> listClone = new ArrayList<>(messageBuffer);
+        ArrayList<Message> listClone = new ArrayList<>(messageBuffer);
         messageBuffer.clear();
         return listClone;
     }

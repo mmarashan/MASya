@@ -10,7 +10,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.*;
 import ru.volgadev.masya.state.MemberRegistry;
-import ru.volgadev.masya.model.MessageDTO;
+import ru.volgadev.masya.model.Message;
 import ru.volgadev.masya.state.SessionHolder;
 
 import java.util.ArrayList;
@@ -79,8 +79,8 @@ public class WebSocketEventController {
     * */
     private void sendJoinMessageToMember(String username, String roomCode){
         logger.info("Send JOIN to member "+ username);
-        MessageDTO chatMessage = new MessageDTO();
-        chatMessage.setType(MessageDTO.MessageType.JOIN);
+        Message chatMessage = new Message();
+        chatMessage.setType(Message.MessageType.JOIN);
         chatMessage.setReceiver(username);
         chatMessage.setTextContent(roomCode);
         // TODO: temporally roomCode is sessionId. fix it
@@ -94,11 +94,11 @@ public class WebSocketEventController {
      * */
     private void sendBufferMemberMessages(String sessionId){
         String username = sessionHolder.getMemberBySession(sessionId);
-        ArrayList<MessageDTO> bufferMessages = memberRegistry.getNewMessages(username);
+        ArrayList<Message> bufferMessages = memberRegistry.getNewMessages(username);
         if (bufferMessages!=null){
             logger.info("Send buffer messages for "+ username + "; count="+bufferMessages.size());
-            for (MessageDTO m: bufferMessages){
-                messagingTemplate.convertAndSend("/message.new/"+sessionId, m);
+            for (Message m: bufferMessages){
+                messagingTemplate.convertAndSend("/message.new/"+sessionId);
             }
         }
     }

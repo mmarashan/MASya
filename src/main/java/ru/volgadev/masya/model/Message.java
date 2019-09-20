@@ -2,12 +2,13 @@ package ru.volgadev.masya.model;
 
 import java.time.Instant;
 
-public class MessageDTO {
+public class Message {
     private MessageType type;
     private String textContent;
     private String sender;
     private String receiver;
     private String tag;
+    private String customType;
 
     private long timestampUTC = Instant.now().getEpochSecond();
 
@@ -65,10 +66,19 @@ public class MessageDTO {
         return timestampUTC;
     }
 
+    public String getCustomType() {
+        return customType;
+    }
+
+    public void setCustomType(String customType) {
+        this.customType = customType;
+    }
+
     @Override
     public String toString() {
         return "{" +
                 "\"type\":\"" + type + '\"' +
+                ",\"customType\":\"" + customType + '\"' +
                 ", \"textContent\":\"" + textContent + '\"' +
                 ", \"sender\":\"" + sender + '\"' +
                 ", \"receiver\":\"" + receiver + '\"' +
