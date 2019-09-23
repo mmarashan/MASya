@@ -1,23 +1,25 @@
 version: '3.7'
 services:
-#  nginx:
-#   image: nginx
-#   restart: always
-#   ports:
-#   - 8011:8011
-#   volumes:
-#   - ./nginx/conf.d:/etc/nginx/conf.d
-#   depends_on:
-#   - server
+
+  nginx:
+   image: nginx
+
+   ports:
+   - 8010:8010
+   volumes:
+   - ./nginx/conf.d:/etc/nginx/conf.d
+   depends_on:
+   - server
 
   server:
-    restart: always
-    build: ./server
-    working_dir: /server
-    ports:
-       - 8010:8010
-    volumes:
-      - ./server:/server
-      - ~/.m2:/root/.m2
-    command: mvn clean spring-boot:run
+    container_name: server
+    hostname: server
 
+    restart: always
+    volumes:
+      - ./:/server
+      - ~/.m2:/root/.m2
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: mvn clean spring-boot:run
