@@ -9,11 +9,11 @@ services:
    volumes:
    - ./nginx/conf.d:/etc/nginx/conf.d
    depends_on:
-   - server
+   - masya_server
 
-  server:
-    container_name: server
-    hostname: server
+  masya_server:
+    container_name: masya_server
+    hostname: masya_server
 
     restart: always
     volumes:
