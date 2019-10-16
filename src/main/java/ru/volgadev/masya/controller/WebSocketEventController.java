@@ -126,12 +126,13 @@ public class WebSocketEventController {
         logger.info("Member "+ username+" subscribe on "+event.getMessage().getHeaders().get("simpDestination"));
 
         // for new member send JOIN message with roomCode and old messages from buffer
-        if (!memberRegistry.isMemberOnline(username)) {
+        if (true/*!memberRegistry.isMemberOnline(username)*/) {
             sendJoinMessageToMember(username, sessionId);
         }
         if (joinToPrivateRoom){
             sendBufferMemberMessages(sessionId);
         }
+
         memberRegistry.setMemberOnline(username, true);
     }
 

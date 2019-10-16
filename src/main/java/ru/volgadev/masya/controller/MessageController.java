@@ -85,7 +85,7 @@ public class MessageController {
         }
         // if receiver online - send message
         // else save message for next session
-        if (memberRegistry.isMemberOnline(receiverUserame)){
+        if (true/*memberRegistry.isMemberOnline(receiverUserame)*/){
             String roomCode = memberRegistry.getMemberRoom(receiverUserame);
             LOGGER.info("Send: " + message.toString()+" to "+roomCode);
             messagingTemplate.convertAndSend("/message.new/" + roomCode, message);
