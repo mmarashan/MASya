@@ -100,13 +100,15 @@ public class WebSocketEventController {
         // иначе отправляем сообщение с данными о приватной комнате (временно не проверяем, онлайн пользователь или нет
         // TODO: temporally roomCode is sessionId. fix it
         if (joinToPrivateRoom){
+            logger.info("Member joined to private room");
             messageSender.sendBufferMemberMessages(sessionId);
+            daoApi.authMember(username);
         } else {
-            messageSender.sendJoinMessageToMember(username, sessionId);
-            daoApi.addMemberRoom(username, sessionId);
+            if (!daoApi.isMemberOnline(username)) {
+                messageSender.sendJoinMessageToMember(username, sessionId);
+                daoApi.addMemberRoom(username, sessionId);
+            }
         }
-
-        daoApi.authMember(username);
     }
 
     @EventListener
