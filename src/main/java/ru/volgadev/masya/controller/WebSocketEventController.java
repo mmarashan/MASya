@@ -49,16 +49,19 @@ public class WebSocketEventController {
                 logger.info("Success authorisation for "+username+"; sessionId = "+sessionId);
                 // create room, registerSession and subscribe
                 daoApi.registerMemberSession(sessionId, username);
-                messageSender.sendJoinMessageToMember(username, sessionId);
-                daoApi.addMemberRoom(username, sessionId);
+                String roomCode = username;
+                messageSender.sendJoinMessageToMember(username, roomCode);
+                daoApi.addMemberRoom(username, roomCode);
+                daoApi.authMember(username);
+                logger.error("Success authorisation. Send join message to "+username);
                 return;
             } else {
-                logger.info("Unsuccess authorisation for "+username+". Close session "+sessionId);
+                logger.error("Unsuccess authorisation for "+username+". Close session "+sessionId);
                 daoApi.closeSession(sessionId);
                 return;
             }
         }
-        logger.info("Unsuccess authorisation. Close session "+sessionId);
+        logger.error("Unsuccess authorisation. Close session "+sessionId);
         daoApi.closeSession(sessionId);
 
     }
@@ -105,7 +108,7 @@ public class WebSocketEventController {
             logger.info("Member joined to private room");
             messageSender.sendBufferMemberMessages(sessionId);
         }
-        daoApi.authMember(username);
+        // daoApi.authMember(username);
 //        else {
 //            if (!daoApi.isMemberOnline(username)) {
 //                messageSender.sendJoinMessageToMember(username, sessionId);
