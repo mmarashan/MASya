@@ -95,6 +95,7 @@ public class WebSocketEventController {
             logger.error("Error message for subscribing! Empty simpDestination");
         }
 
+        // TODO: отвязаться от этого заголовка - не все клиенты его кладут - придумать свой спец.
         boolean joinToPrivateRoom = event.getMessage().getHeaders().get("simpDestination").toString().endsWith(sessionId);
 
         // TODO: check permission for subscription
@@ -103,7 +104,6 @@ public class WebSocketEventController {
 
         // если пользователь подключился к приватной комнате, отправляем ему сообщение из буффера
         // иначе отправляем сообщение с данными о приватной комнате (временно не проверяем, онлайн пользователь или нет
-        // TODO: temporally roomCode is sessionId. fix it
         if (joinToPrivateRoom){
             logger.info("Member joined to private room");
             messageSender.sendBufferMemberMessages(sessionId);
