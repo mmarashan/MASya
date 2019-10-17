@@ -49,7 +49,8 @@ public class WebSocketEventController {
                 logger.info("Success authorisation for "+username+"; sessionId = "+sessionId);
                 // create room, registerSession and subscribe
                 daoApi.registerMemberSession(sessionId, username);
-
+                messageSender.sendJoinMessageToMember(username, sessionId);
+                daoApi.addMemberRoom(username, sessionId);
                 return;
             } else {
                 logger.info("Unsuccess authorisation for "+username+". Close session "+sessionId);
@@ -83,11 +84,12 @@ public class WebSocketEventController {
         String username = daoApi.getMemberBySession(sessionId);
 
         if (username==null){
+            logger.error("Error message for subscribing! Empty username");
             return;
         }
 
         if (!event.getMessage().getHeaders().containsKey("simpDestination")){
-            logger.debug("Error message for subscribing! Empty simpDestination");
+            logger.error("Error message for subscribing! Empty simpDestination");
         }
 
         boolean joinToPrivateRoom = event.getMessage().getHeaders().get("simpDestination").toString().endsWith(sessionId);
@@ -103,12 +105,13 @@ public class WebSocketEventController {
             logger.info("Member joined to private room");
             messageSender.sendBufferMemberMessages(sessionId);
             daoApi.authMember(username);
-        } else {
-            if (!daoApi.isMemberOnline(username)) {
-                messageSender.sendJoinMessageToMember(username, sessionId);
-                daoApi.addMemberRoom(username, sessionId);
-            }
         }
+//        else {
+//            if (!daoApi.isMemberOnline(username)) {
+//                messageSender.sendJoinMessageToMember(username, sessionId);
+//                daoApi.addMemberRoom(username, sessionId);
+//            }
+//        }
     }
 
     @EventListener
