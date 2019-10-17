@@ -104,8 +104,8 @@ public class WebSocketEventController {
         if (joinToPrivateRoom){
             logger.info("Member joined to private room");
             messageSender.sendBufferMemberMessages(sessionId);
-            daoApi.authMember(username);
         }
+        daoApi.authMember(username);
 //        else {
 //            if (!daoApi.isMemberOnline(username)) {
 //                messageSender.sendJoinMessageToMember(username, sessionId);
