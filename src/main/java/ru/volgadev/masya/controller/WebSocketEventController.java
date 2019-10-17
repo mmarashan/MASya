@@ -9,11 +9,9 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.*;
-import ru.volgadev.masya.state.MemberRegistry;
-import ru.volgadev.masya.model.Message;
-import ru.volgadev.masya.state.SessionHolder;
-
-import java.util.ArrayList;
+import ru.volgadev.masya.data.DaoApi;
+import ru.volgadev.masya.data.dao.MemberRegistry;
+import ru.volgadev.masya.data.dao.SessionHolder;
 
 @Component
 public class WebSocketEventController {
@@ -27,10 +25,10 @@ public class WebSocketEventController {
     private SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
-    private SessionHolder sessionHolder;
+    private DaoApi daoApi;
 
     @Autowired
-    private MemberRegistry memberRegistry;
+    private MessageSender messageSender;
 
     /*
         handle connect - check credentials
@@ -45,22 +43,22 @@ public class WebSocketEventController {
         logger.info("sessionId = "+sessionId);
         logger.info("headers: "+ headerAccessor.getMessageHeaders().toString());
         if (StompCommand.CONNECT.equals(headerAccessor.getCommand())) {
-            String username = (String) headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
-            String password = (String) headerAccessor.getFirstNativeHeader(PASSWORD_HEADER);
-            if ((username!=null)&&(password!=null)&&(memberRegistry.checkCredentials(username, password))){
+            String username = headerAccessor.getFirstNativeHeader(USERNAME_HEADER);
+            String password = headerAccessor.getFirstNativeHeader(PASSWORD_HEADER);
+            if ((username!=null)&&(password!=null)&&(daoApi.checkCredentials(username, password))){
                 logger.info("Success authorisation for "+username+"; sessionId = "+sessionId);
                 // create room, registerSession and subscribe
-                sessionHolder.registerMemberSession(sessionId, username);
+                daoApi.registerMemberSession(sessionId, username);
 
                 return;
             } else {
                 logger.info("Unsuccess authorisation for "+username+". Close session "+sessionId);
-                sessionHolder.closeSessionById(sessionId);
+                daoApi.closeSession(sessionId);
                 return;
             }
         }
         logger.info("Unsuccess authorisation. Close session "+sessionId);
-        sessionHolder.closeSessionById(sessionId);
+        daoApi.closeSession(sessionId);
 
     }
 
@@ -70,38 +68,10 @@ public class WebSocketEventController {
     @EventListener
     public void handleWebSocketConnectedListener(SessionConnectedEvent event) {
         String sessionId = StompHeaderAccessor.wrap(event.getMessage()).getSessionId();
-        String username = sessionHolder.getMemberBySession(sessionId);
+        String username = daoApi.getMemberBySession(sessionId);
         logger.info("Success new web socket connection: " + sessionId + " " + username);
     }
 
-    /*
-    * send sessionId in JOIN message
-    * */
-    private void sendJoinMessageToMember(String username, String roomCode){
-        logger.info("Send JOIN to member "+ username);
-        Message chatMessage = new Message();
-        chatMessage.setType(Message.MessageType.JOIN);
-        chatMessage.setReceiver(username);
-        chatMessage.setTextContent(roomCode);
-        // TODO: temporally roomCode is sessionId. fix it
-        memberRegistry.addMemberRoom(username, roomCode);
-        messagingTemplate.convertAndSend("/message.new/"+username, chatMessage);
-        logger.info("Send JOIN to member "+ username + " OK");
-    }
-
-    /*
-     * send old messages from buffer
-     * */
-    private void sendBufferMemberMessages(String sessionId){
-        String username = sessionHolder.getMemberBySession(sessionId);
-        ArrayList<Message> bufferMessages = memberRegistry.getNewMessages(username);
-        if (bufferMessages!=null){
-            logger.info("Send buffer messages for "+ username + "; count="+bufferMessages.size());
-            for (Message m: bufferMessages){
-                messagingTemplate.convertAndSend("/message.new/"+sessionId);
-            }
-        }
-    }
 
     /*
     * check if online user and know his room
@@ -110,7 +80,7 @@ public class WebSocketEventController {
     public void handleWebSocketSubscribeListener(SessionSubscribeEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = headerAccessor.getSessionId();
-        String username = sessionHolder.getMemberBySession(sessionId);
+        String username = daoApi.getMemberBySession(sessionId);
 
         if (username==null){
             return;
@@ -125,15 +95,18 @@ public class WebSocketEventController {
         // TODO: check permission for subscription
         logger.info("Member "+ username+" subscribe on "+event.getMessage().getHeaders().get("simpDestination"));
 
-        // for new member send JOIN message with roomCode and old messages from buffer
-        if (true/*!memberRegistry.isMemberOnline(username)*/) {
-            sendJoinMessageToMember(username, sessionId);
-        }
+
+        // если пользователь подключился к приватной комнате, отправляем ему сообщение из буффера
+        // иначе отправляем сообщение с данными о приватной комнате (временно не проверяем, онлайн пользователь или нет
+        // TODO: temporally roomCode is sessionId. fix it
         if (joinToPrivateRoom){
-            sendBufferMemberMessages(sessionId);
+            messageSender.sendBufferMemberMessages(sessionId);
+        } else {
+            messageSender.sendJoinMessageToMember(username, sessionId);
+            daoApi.addMemberRoom(username, sessionId);
         }
 
-        memberRegistry.setMemberOnline(username, true);
+        daoApi.authMember(username);
     }
 
     @EventListener
@@ -148,11 +121,10 @@ public class WebSocketEventController {
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = headerAccessor.getSessionId();
-        String username = sessionHolder.getMemberBySession(sessionId);
+        String username = daoApi.getMemberBySession(sessionId);
         logger.info("Member Disconnected : " + username);
 
-        if(sessionId != null) sessionHolder.closeSessionById(sessionId);
-        if(username != null) memberRegistry.setMemberOnline(username, false);
+        if(sessionId != null) daoApi.closeSession(sessionId);
         logger.info("Session closed: " +username + " " + sessionId);
     }
 }

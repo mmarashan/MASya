@@ -1,4 +1,4 @@
-package ru.volgadev.masya.state;
+package ru.volgadev.masya.data.dao;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,33 +21,19 @@ public class SessionHolder {
     // key - sessionId, value - session (WS session create before username define
     private final Map<String, WebSocketSession> sessionMap = new ConcurrentHashMap<>();
 
-    public SessionHolder() {
-        //ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        // good schedule example:
-//        scheduler.scheduleAtFixedRate(new Runnable() {
-//            @Override
-//            public void run() {
-//                sessionMap.keySet().forEach(k -> {
-//                    try {
-//                        sessionMap.get(k).close();
-//                        sessionMap.remove(k);
-//                    } catch (IOException e) {
-//                        LOGGER.error("Error while closing websocket session: {}", e);
-//                    }
-//                });
-//            }
-//        }, 10, 10, TimeUnit.SECONDS);
-    }
-
-    public WebSocketSession getSession(String sessionId){
-        LOGGER.debug("Return session sessionId = "+sessionId);
-        if (sessionMap.containsKey(sessionId)) return sessionMap.get(sessionId);
-        else return null;
-    }
+//    public WebSocketSession getSession(String sessionId){
+//        LOGGER.debug("Return session sessionId = "+sessionId);
+//        if (sessionMap.containsKey(sessionId)) return sessionMap.get(sessionId);
+//        else return null;
+//    }
 
     public void registerSession(WebSocketSession session) {
         LOGGER.info("Register new session: "+session.getId());
         sessionMap.put(session.getId(), session);
+    }
+
+    public void closeSession(WebSocketSession session){
+        closeSessionById(session.getId());
     }
 
     public void closeSessionById(String sessionId){
@@ -71,6 +57,5 @@ public class SessionHolder {
     public void registerMemberSession(String sessionId, String usercode){
         if (sessionMap.containsKey(sessionId)) sessionUserMap.put(sessionId, usercode);
     }
-
 
 }

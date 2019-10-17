@@ -1,10 +1,10 @@
-package ru.volgadev.masya.state;
+package ru.volgadev.masya.data.dao;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.volgadev.masya.model.Member;
-import ru.volgadev.masya.model.Message;
+import ru.volgadev.masya.data.model.Member;
+import ru.volgadev.masya.data.model.Message;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -18,11 +18,6 @@ public class MemberRegistry {
 
     // key - username, value - roomCode
     private final Map<String, Member> memberMap = new ConcurrentHashMap<>();
-
-    public void addMember(String username){
-        LOGGER.info("Add member: " + username);
-        memberMap.put(username, new Member(username));
-    }
 
     public boolean isMemberRegistred(String username){
         return memberMap.containsKey(username);
@@ -66,6 +61,11 @@ public class MemberRegistry {
     public ArrayList<Message> getNewMessages(String username){
         if (memberMap.containsKey(username)) return memberMap.get(username).getNewMessages();
         return null;
+    }
+
+    private void addMember(String username){
+        LOGGER.info("Add member: " + username);
+        memberMap.put(username, new Member(username));
     }
 
 }

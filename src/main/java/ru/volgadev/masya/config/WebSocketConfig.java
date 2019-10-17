@@ -19,6 +19,7 @@ public class WebSocketConfig extends WebSocketMessageBrokerConfigurationSupport 
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // TODO: переименоваить и расписать различия
         registry.addEndpoint("/ws").withSockJS();
         registry.addEndpoint("/websocket");
     }
@@ -26,8 +27,8 @@ public class WebSocketConfig extends WebSocketMessageBrokerConfigurationSupport 
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/"); // was /app - check it
-        registry.enableSimpleBroker("/");   //  -was /chat - check it- in-memory broker
+        registry.setApplicationDestinationPrefixes("/");
+        registry.enableSimpleBroker("/");
     }
 
     // registerSession Handler, that save sessions in holder

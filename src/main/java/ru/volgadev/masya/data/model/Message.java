@@ -1,4 +1,4 @@
-package ru.volgadev.masya.model;
+package ru.volgadev.masya.data.model;
 
 import java.time.Instant;
 

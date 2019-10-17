@@ -7,11 +7,13 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import ru.volgadev.masya.state.MemberRegistry;
-import ru.volgadev.masya.model.Message;
-import ru.volgadev.masya.state.SessionHolder;
+import org.springframework.stereotype.Controller;
+import ru.volgadev.masya.data.DaoApi;
+import ru.volgadev.masya.data.dao.MemberRegistry;
+import ru.volgadev.masya.data.model.Message;
+import ru.volgadev.masya.data.dao.SessionHolder;
 
-@org.springframework.stereotype.Controller
+@Controller
 public class MessageController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
@@ -20,10 +22,10 @@ public class MessageController {
     private SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
-    private SessionHolder sessionHolder;
+    private DaoApi daoApi;
 
     @Autowired
-    private MemberRegistry memberRegistry;
+    private MessageSender messageSender;
     
     // handle input message
     @MessageMapping("/message.send")
@@ -36,7 +38,7 @@ public class MessageController {
 
     }
 
-    void handeSend(@Payload Message message, SimpMessageHeaderAccessor headerAccessor){
+    private void handeSend(@Payload Message message, SimpMessageHeaderAccessor headerAccessor){
 
         String sessionId = headerAccessor.getSessionId();
 
@@ -46,63 +48,32 @@ public class MessageController {
             return;
         }
         if (message.getReceiver()==null) {
-            sendError(message.getSender(), "Receiver is empty!");
+            messageSender.sendError(message.getSender(), "Receiver is empty!");
             return;
         }
 
         // TODO: save message to db as cost option :)
-        sendMessage(message);
+        messageSender.sendMessage(message);
     }
 
     // receiver send submit message to sender
     // TODO: save unsubmited messages and repeat after
     // NOW: redirect it
-    void handleSubmit(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
+    private void handleSubmit(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
         LOGGER.info("Handle submit message: " + message.toString());
         if (message.getTag()==null){
-            sendError(message.getSender(), "Message TAG is empty!");
+            messageSender.sendError(message.getSender(), "Message TAG is empty!");
             return;
         }
-        sendMessage(message);
+        messageSender.sendMessage(message);
     }
 
     // close session and set offline
-    void handleLeave(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
-        LOGGER.info("Handle message: " + message.toString());
-
+    private void handleLeave(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
-        sessionHolder.closeSessionById(sessionId);
-        memberRegistry.setMemberOnline(message.getSender(), false);
+        daoApi.closeSession(headerAccessor.getSessionId());
         LOGGER.info("Session closed: " + sessionId);
 
     }
-
-
-    void sendMessage(Message message){
-        String receiverUserame = message.getReceiver();
-        if (receiverUserame == null){
-            return;
-        }
-        // if receiver online - send message
-        // else save message for next session
-        if (true/*memberRegistry.isMemberOnline(receiverUserame)*/){
-            String roomCode = memberRegistry.getMemberRoom(receiverUserame);
-            LOGGER.info("Send: " + message.toString()+" to "+roomCode);
-            messagingTemplate.convertAndSend("/message.new/" + roomCode, message);
-        } else {
-            LOGGER.info("Add to buffer: " + message.toString());
-            memberRegistry.addNewMessageToMemberBuffer(receiverUserame, message);
-        }
-    }
-
-
-    void sendError(String receiverCode, String errorText){
-        Message message = new Message();
-        message.setReceiver(receiverCode);
-        message.setTextContent(errorText);
-        message.setType(Message.MessageType.ERROR);
-        sendMessage(message);
-    }
-
 
 }
